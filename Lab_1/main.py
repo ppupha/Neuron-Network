@@ -1,0 +1,79 @@
+from perceptron.perceptron import Perceptron
+from perceptron.layers import *
+from training_dataset import dataset, test_dataset, NUMBER_COUNT, test_values
+import random
+
+def train_perceptron():
+    network = Perceptron()
+    input_count = len(dataset[0].inputs)
+    print('----------------------------')
+    print('Generating layers')
+    for _ in range(input_count):
+        network.s_layer.add_neuron(None, lambda value: value)
+    print('S-layer generated')
+
+    a_neurons_count = 30000
+    for position in range(a_neurons_count):
+        neuron = ANeuron(None, lambda value: 1 if value >= 0 else 0)
+        neuron.input_weights = [
+            random.choice([-1, 0, 1]) for i in range(input_count)
+        ]
+        neuron.calculate_bias()
+        network.a_layer.neurons.append(neuron)
+    print('A-layer generated')
+
+    for _ in range(NUMBER_COUNT):
+        network.r_layer.add_neuron(a_neurons_count, lambda: 0, lambda value: 1 if value >=0 else -1, 0.01, 0.0)
+    print('R-layer generated')
+
+    network.train(dataset)
+    network.optimize(dataset)
+    return network
+
+
+def test_network(network, test_values, is_print = True):
+    total_classifications = len(test_dataset)
+    print(len(test_values))
+    misc = 0
+    for data in test_dataset:
+        results = network.solve(data.inputs)
+        if results != data.results:
+            misc += 1
+            if (is_print) and False:
+                for i in range(len(data.inputs)):
+                    print(data.inputs[i], end = ' ')
+                    if (i+1) % 5 == 0 :
+                        print("\n")
+                print("     result is [{}] \ndata.result is [{}] \n\n".format(results, data.results))
+
+    if (is_print):
+        print('----------------------------')
+        print("Mistake = {} \n Total = {}".format(misc, total_classifications))
+        print(
+            'Test accuracy: {:.2f}%'.format(
+                float(total_classifications - misc) / total_classifications * 100
+            )
+        )
+    return float(total_classifications - misc) / total_classifications * 100
+
+def test():
+    s = 0
+    n = 1
+    for i in range(n):
+        network = train_perceptron()
+    
+        s += test_network(network, False)
+    return s / n 
+
+def main():
+    network = train_perceptron()
+    
+    test_network(network, test_values)
+    
+    for i in test_values:
+        print(i, test_values[i])
+    
+
+
+if __name__ == '__main__':
+    main()
